@@ -1,6 +1,7 @@
 <?php
 
-use Crab\Engine\EvenLoop\SelectLoop;
+use Crab\Engine\EventLoop\SelectLoop;
+use Crab\Engine\EventLoop\TcpConnection;
 use Crab\Engine\Net\SocketAddress;
 use Crab\Engine\Net\TcpServer;
 
@@ -10,23 +11,11 @@ $loop = new SelectLoop();
 $address = SocketAddress::parse('tcp://0.0.0.0:9000');
 
 $server = new TcpServer($loop, $address, function ($client, string $remote) use ($loop): void {
-    echo "client connected: $remote" . PHP_EOL;
+    $connection = new TcpConnection($loop, $client, $remote);
 
-    $loop->onReadable($client, function ($client) use ($loop): void {
-        $data = fread($client, 8192);
-
-        if ($data === '' || $data === false) {
-            $loop->offReadable($client);
-            fclose($client);
-            return;
-        }
-
-        if (trim($data) === 'help') {
-            fwrite($client, "/version check verison\n /name check the name");
-        } else {
-            fwrite($client, 'echo: wrong command\n');
-        }
-    });
+    $connection->onMessage = function (TcpConnection $connection, string $data): void {
+        $connection->send("echo: $data");
+    };
 });
 
 $server->listen();

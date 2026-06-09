@@ -2,7 +2,7 @@
 
 namespace Crab\Engine\Net;
 
-use Crab\Engine\EvenLoop\EventLoop;
+use Crab\Engine\EventLoop\EventLoop;
 use RuntimeException;
 
 final class TcpServer

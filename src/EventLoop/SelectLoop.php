@@ -1,8 +1,8 @@
 <?php
 
-namespace Crab\Engine\EvenLoop;
+namespace Crab\Engine\EventLoop;
 
-use Crab\Engine\EvenLoop\EventLoop;
+use Crab\Engine\EventLoop\EventLoop;
 
 class SelectLoop implements EventLoop
 {

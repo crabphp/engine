@@ -1,6 +1,6 @@
 <?php
 
-namespace Crab\Engine\EvenLoop;
+namespace Crab\Engine\EventLoop;
 
 interface EventLoop
 {
