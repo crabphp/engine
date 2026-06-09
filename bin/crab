@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+
+<?php
+
+use Crab\Engine\Crab;
+use Crab\Engine\Support\Cli;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$command = Cli::command($argv);
+
+if ($command === 'start') {
+    Crab::run();
+}
+
+echo 'Crab command: ' . $command . "\n";

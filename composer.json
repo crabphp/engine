@@ -3,6 +3,9 @@
     "description": "The Crab PHP low level engine",
     "type": "library",
     "license": "MIT",
+    "require": {
+      "php": "^8.4"
+    },
     "autoload": {
         "psr-4": {
             "Crab\\Engine\\": "src/"
@@ -13,6 +16,5 @@
             "name": "bangnokia",
             "email": "bangnokia@gmail.com"
         }
-    ],
-    "require": {}
+    ]
 }
