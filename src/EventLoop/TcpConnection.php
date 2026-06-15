@@ -4,6 +4,7 @@ namespace Crab\Engine\EventLoop;
 
 use Crab\Engine\Connection\ConnectionState;
 use Crab\Engine\EventLoop\EventLoop;
+use Crab\Engine\Protocol\Protocol;
 
 final class TcpConnection
 {
@@ -28,6 +29,8 @@ final class TcpConnection
     public mixed $onBufferFull = null;
     public mixed $onBufferDrain = null;
 
+    private ?Protocol $protocol = null;
+
     public function __construct(
         private EventLoop $loop,
         private mixed $socket,
@@ -35,6 +38,11 @@ final class TcpConnection
     ) {
         stream_set_blocking($this->socket, false);
         $this->loop->onReadable($this->socket, $this->read(...));
+    }
+
+    public function useProtocol(?Protocol $protocol): void
+    {
+        $this->protocol = $protocol;
     }
 
     public function read(): void
@@ -51,15 +59,55 @@ final class TcpConnection
 
         $this->recvBuffer .= $data;
 
-        $message = $this->recvBuffer;
-        $this->recvBuffer = '';
+        if ($this->protocol === null) {
+            $message = $this->recvBuffer;
+            $this->recvBuffer = '';
+            $this->emitMessage($message);
+            return;
+        }
 
+        while ($this->recvBuffer !== '') {
+            $length = $this->protocol->input($this->recvBuffer, $this);
+
+            if ($length === 0) {
+                break;
+            }
+
+            if ($length < 0) {
+                $this->close();
+                break;
+            }
+
+            if (strlen($this->recvBuffer) < $length) {
+                break;
+            }
+
+            $packet = substr($this->recvBuffer, 0, $length);
+            $this->recvBuffer = substr($this->recvBuffer, $length);
+
+            $message = $this->protocol->decode($packet, $this);
+
+            $this->emitMessage($message);
+        }
+    }
+
+    public function emitMessage(string $message): void
+    {
         if ($this->onMessage !== null) {
             ($this->onMessage)($this, $message);
         }
     }
 
-    public function send(string $data): bool
+    public function send(mixed $data): bool
+    {
+        if ($this->protocol !== null) {
+            $data = $this->protocol->encode($data, $this);
+        }
+
+        return $this->writeBytes((string) $data);
+    }
+
+    public function writeBytes(string $data): bool
     {
         if ($this->state !== ConnectionState::Established) {
             return false;
